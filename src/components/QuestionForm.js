@@ -9,7 +9,7 @@ function QuestionForm({ onAddQuestion }) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ Track if component is mounted
+  
   const isMounted = useRef(true);
   useEffect(() => {
     return () => {
@@ -45,7 +45,7 @@ function QuestionForm({ onAddQuestion }) {
       .then((newQuestion) => {
         onAddQuestion(newQuestion);
 
-        // ✅ only update state if still mounted
+      
         if (isMounted.current) {
           setFormData({
             prompt: "",
