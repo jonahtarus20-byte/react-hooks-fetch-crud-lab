@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 function QuestionForm({ onAddQuestion }) {
   const [formData, setFormData] = useState({
@@ -7,40 +7,59 @@ function QuestionForm({ onAddQuestion }) {
     correctIndex: 0,
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ Track if component is mounted
+  const isMounted = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   function handleChange(event) {
     const { name, value } = event.target;
 
     if (name.startsWith("answer")) {
-      const index = parseInt(name.replace("answer", ""), 10);
-      const newAnswers = [...formData.answers];
-      newAnswers[index] = value;
-      setFormData({ ...formData, answers: newAnswers });
+      const index = parseInt(name.replace("answer-", ""), 10);
+      const updatedAnswers = [...formData.answers];
+      updatedAnswers[index] = value;
+      setFormData({ ...formData, answers: updatedAnswers });
+    } else if (name === "correctIndex") {
+      setFormData({ ...formData, correctIndex: parseInt(value, 10) });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   }
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  function handleSubmit(e) {
+    e.preventDefault();
+    setIsSubmitting(true);
 
     fetch("http://localhost:4000/questions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     })
       .then((r) => r.json())
       .then((newQuestion) => {
         onAddQuestion(newQuestion);
-        // reset form after successful submission
-        setFormData({
-          prompt: "",
-          answers: ["", "", "", ""],
-          correctIndex: 0,
-        });
+
+        // ✅ only update state if still mounted
+        if (isMounted.current) {
+          setFormData({
+            prompt: "",
+            answers: ["", "", "", ""],
+            correctIndex: 0,
+          });
+        }
       })
-      .catch((err) => console.error("Error adding question:", err));
+      .catch((err) => console.error("Error submitting:", err))
+      .then(() => {
+        if (isMounted.current) {
+          setIsSubmitting(false);
+        }
+      });
   }
 
   return (
@@ -48,7 +67,7 @@ function QuestionForm({ onAddQuestion }) {
       <h1>New Question</h1>
       <form onSubmit={handleSubmit}>
         <label>
-          Prompt
+          Prompt:
           <input
             type="text"
             name="prompt"
@@ -56,21 +75,44 @@ function QuestionForm({ onAddQuestion }) {
             onChange={handleChange}
           />
         </label>
-
-        {formData.answers.map((answer, index) => (
-          <label key={index}>
-            Answer {index + 1}
-            <input
-              type="text"
-              name={`answer${index}`}
-              value={answer}
-              onChange={handleChange}
-            />
-          </label>
-        ))}
-
         <label>
-          Correct Answer
+          Answer 1:
+          <input
+            type="text"
+            name="answer-0"
+            value={formData.answers[0]}
+            onChange={handleChange}
+          />
+        </label>
+        <label>
+          Answer 2:
+          <input
+            type="text"
+            name="answer-1"
+            value={formData.answers[1]}
+            onChange={handleChange}
+          />
+        </label>
+        <label>
+          Answer 3:
+          <input
+            type="text"
+            name="answer-2"
+            value={formData.answers[2]}
+            onChange={handleChange}
+          />
+        </label>
+        <label>
+          Answer 4:
+          <input
+            type="text"
+            name="answer-3"
+            value={formData.answers[3]}
+            onChange={handleChange}
+          />
+        </label>
+        <label>
+          Correct Answer:
           <select
             name="correctIndex"
             value={formData.correctIndex}
@@ -83,8 +125,9 @@ function QuestionForm({ onAddQuestion }) {
             ))}
           </select>
         </label>
-
-        <button type="submit">Add Question</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Add Question"}
+        </button>
       </form>
     </section>
   );
