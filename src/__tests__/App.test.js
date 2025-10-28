@@ -1,11 +1,10 @@
 import React from "react";
-import "whatwg-fetch";
 import { render, screen, fireEvent, waitForElementToBeRemoved } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { server } from "../mocks/server";
 import App from "../components/App";
 
-// Start and reset MSW server for tests
+// Setup MSW server
 beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
@@ -40,7 +39,7 @@ test("creates a new question when the form is submitted", async () => {
 });
 
 test("deletes the question when the delete button is clicked", async () => {
-  render(<App />);
+  const { rerender } = render(<App />);
 
   fireEvent.click(screen.getByText(/View Questions/i));
 
@@ -50,17 +49,24 @@ test("deletes the question when the delete button is clicked", async () => {
 
   await waitForElementToBeRemoved(() => screen.queryByText(/lorem testum 1/i));
 
+  rerender(<App />);
+
   expect(screen.queryByText(/lorem testum 1/i)).not.toBeInTheDocument();
+  await screen.findByText(/lorem testum 2/i);
 });
 
 test("updates the answer when the dropdown is changed", async () => {
-  render(<App />);
+  const { rerender } = render(<App />);
 
   fireEvent.click(screen.getByText(/View Questions/i));
 
   await screen.findByText(/lorem testum 2/i);
 
   fireEvent.change(screen.getAllByLabelText(/Correct Answer/i)[0], { target: { value: "3" } });
+
+  expect(screen.getAllByLabelText(/Correct Answer/i)[0].value).toBe("3");
+
+  rerender(<App />);
 
   expect(screen.getAllByLabelText(/Correct Answer/i)[0].value).toBe("3");
 });
