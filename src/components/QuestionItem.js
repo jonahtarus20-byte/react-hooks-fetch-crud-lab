@@ -5,11 +5,7 @@ function QuestionItem({ question, onUpdateQuestion, onDeleteQuestion }) {
 
   function handleChange(e) {
     const newCorrectIndex = parseInt(e.target.value);
-
-    // ✅ Update UI immediately before fetch finishes
     onUpdateQuestion({ ...question, correctIndex: newCorrectIndex });
-
-    // ✅ Update on the server (no waiting)
     fetch(`http://localhost:4000/questions/${id}`, {
       method: "PATCH",
       headers: {
@@ -30,8 +26,6 @@ function QuestionItem({ question, onUpdateQuestion, onDeleteQuestion }) {
   return (
     <li>
       <h4>{prompt}</h4>
-
-      {/* ✅ Label linked to select for test compatibility */}
       <label htmlFor={`correct-${id}`}>Correct Answer:</label>
       <select
         id={`correct-${id}`}
